@@ -1,0 +1,29 @@
+{
+  "name": "元素記号あて",
+  "short_name": "元素記号あて",
+  "description": "元素の記号・名前・原子番号・周期表の位置・身近な使い道を当てる1日5問（文部科学省「一家に1枚 周期表」・日本化学会・IUPAC にもとづく）",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f1e7",
+  "theme_color": "#f6f1e7",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
