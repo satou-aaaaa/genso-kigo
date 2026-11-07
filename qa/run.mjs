@@ -17,20 +17,28 @@ const check = (name, ok, detail = "") => results.push({ name, ok: !!ok, detail: 
 const G = createRequire(import.meta.url)(path.join(root, "gen.js"));
 
 // ---- 0. gen.js とは別に持つ表（日本化学会「原子量表」の日本語名と記号）と、原子番号から周期・族を出す式（IUPAC の18族の周期表）----
-const NAMES = "1 H 水素,2 He ヘリウム,3 Li リチウム,4 Be ベリリウム,5 B ホウ素,6 C 炭素,7 N 窒素,8 O 酸素,9 F フッ素,10 Ne ネオン,11 Na ナトリウム,12 Mg マグネシウム,13 Al アルミニウム,14 Si ケイ素,15 P リン,16 S 硫黄,17 Cl 塩素,18 Ar アルゴン,19 K カリウム,20 Ca カルシウム,21 Sc スカンジウム,22 Ti チタン,23 V バナジウム,24 Cr クロム,25 Mn マンガン,26 Fe 鉄,27 Co コバルト,28 Ni ニッケル,29 Cu 銅,30 Zn 亜鉛,31 Ga ガリウム,32 Ge ゲルマニウム,33 As ヒ素,34 Se セレン,35 Br 臭素,36 Kr クリプトン,47 Ag 銀,50 Sn スズ,53 I ヨウ素,78 Pt 白金,79 Au 金,80 Hg 水銀,82 Pb 鉛,92 U ウラン,113 Nh ニホニウム"
+const NAMES = ("1 H 水素,2 He ヘリウム,3 Li リチウム,4 Be ベリリウム,5 B ホウ素,6 C 炭素,7 N 窒素,8 O 酸素,9 F フッ素,10 Ne ネオン,11 Na ナトリウム,12 Mg マグネシウム,13 Al アルミニウム,14 Si ケイ素,15 P リン,16 S 硫黄,17 Cl 塩素,18 Ar アルゴン,19 K カリウム,20 Ca カルシウム,21 Sc スカンジウム,22 Ti チタン,23 V バナジウム,24 Cr クロム,25 Mn マンガン,26 Fe 鉄,27 Co コバルト,28 Ni ニッケル,29 Cu 銅,30 Zn 亜鉛,31 Ga ガリウム,32 Ge ゲルマニウム,33 As ヒ素,34 Se セレン,35 Br 臭素,36 Kr クリプトン,47 Ag 銀,50 Sn スズ,53 I ヨウ素,78 Pt 白金,79 Au 金,80 Hg 水銀,82 Pb 鉛,92 U ウラン,113 Nh ニホニウム"
+  // 2026-11-08 に足した73元素（日本化学会「原子量表（2012）」・113〜118番は文部科学省。出典メモ games/genso-kigo-more.md の表から写した）
+  + ",37 Rb ルビジウム,38 Sr ストロンチウム,39 Y イットリウム,40 Zr ジルコニウム,41 Nb ニオブ,42 Mo モリブデン,43 Tc テクネチウム,44 Ru ルテニウム,45 Rh ロジウム,46 Pd パラジウム,48 Cd カドミウム,49 In インジウム,51 Sb アンチモン,52 Te テルル,54 Xe キセノン,55 Cs セシウム,56 Ba バリウム,57 La ランタン,58 Ce セリウム,59 Pr プラセオジム,60 Nd ネオジム,61 Pm プロメチウム,62 Sm サマリウム,63 Eu ユウロピウム,64 Gd ガドリニウム,65 Tb テルビウム,66 Dy ジスプロシウム,67 Ho ホルミウム,68 Er エルビウム,69 Tm ツリウム,70 Yb イッテルビウム,71 Lu ルテチウム,72 Hf ハフニウム,73 Ta タンタル,74 W タングステン,75 Re レニウム,76 Os オスミウム,77 Ir イリジウム,81 Tl タリウム,83 Bi ビスマス,84 Po ポロニウム,85 At アスタチン,86 Rn ラドン,87 Fr フランシウム,88 Ra ラジウム,89 Ac アクチニウム,90 Th トリウム,91 Pa プロトアクチニウム,93 Np ネプツニウム,94 Pu プルトニウム,95 Am アメリシウム,96 Cm キュリウム,97 Bk バークリウム,98 Cf カリホルニウム,99 Es アインスタイニウム,100 Fm フェルミウム,101 Md メンデレビウム,102 No ノーベリウム,103 Lr ローレンシウム,104 Rf ラザホージウム,105 Db ドブニウム,106 Sg シーボーギウム,107 Bh ボーリウム,108 Hs ハッシウム,109 Mt マイトネリウム,110 Ds ダームスタチウム,111 Rg レントゲニウム,112 Cn コペルニシウム,114 Fl フレロビウム,115 Mc モスコビウム,116 Lv リバモリウム,117 Ts テネシン,118 Og オガネソン")
   .split(",").map((r) => { const [z, s, n] = r.split(" "); return { z: +z, s, n }; });
 const BYN = Object.fromEntries(NAMES.map((r) => [r.n, r])), BYS = Object.fromEntries(NAMES.map((r) => [r.s, r]));
 const ENDS = [2, 10, 18, 36, 54, 86, 118];
 const period = (z) => ENDS.findIndex((e) => z <= e) + 1;
 const group = (z) => { const p = period(z), o = z - (p === 1 ? 0 : ENDS[p - 2]); // その段の何番目か
   if (p === 1) return z === 1 ? 1 : 18; if (p <= 3) return o <= 2 ? o : o + 10; if (p <= 5) return o; return o <= 2 ? o : o <= 17 ? 0 : o - 14; }; // 0＝ランタノイド・アクチノイド
-// ふだんの温度（25℃）で気体・液体の元素（このゲームの45の中）。ほかは固体（ニホニウムはわからない）。金属でない元素と、どちらとも言える元素
-const GAS = "H He N O F Ne Cl Ar Kr".split(" "), LIQ = ["Br", "Hg"], NONMETAL = "H He C N O F Ne P S Cl Ar Se Br Kr I".split(" "), SEMI = "B Si Ge As".split(" ");
-const stOf = (s) => (s === "Nh" ? null : GAS.includes(s) ? "気体" : LIQ.includes(s) ? "液体" : "固体");
-const mOf = (s) => (s === "Nh" ? null : SEMI.includes(s) ? "半" : NONMETAL.includes(s) ? "非金属" : "金属");
+// ふだんの温度（25℃）で気体・液体の元素。ほかは固体（アスタチン・フランシウム・100番以降はわからない）。金属でない元素と、どちらとも言える元素
+const GAS = "H He N O F Ne Cl Ar Kr Xe Rn".split(" "), LIQ = ["Br", "Hg"], NONMETAL = "H He C N O F Ne P S Cl Ar Se Br Kr I Xe Rn".split(" "), SEMI = "B Si Ge As Sb Te Po".split(" ");
+// 決めない元素：目に見える量が無いアスタチン・フランシウムと、一家に1枚が「形状不明」とする100番以降
+const UNK = (s) => s === "At" || s === "Fr" || BYS[s].z >= 100;
+const stOf = (s) => (UNK(s) ? null : GAS.includes(s) ? "気体" : LIQ.includes(s) ? "液体" : "固体");
+const mOf = (s) => (UNK(s) ? null : SEMI.includes(s) ? "半" : NONMETAL.includes(s) ? "非金属" : "金属");
 // 使い道の問題：文の始まり → 答えの記号（一家に1枚 周期表。出典メモ /mnt/project-files/games/genso-kigo-sources.md）
-const USE = [["ロケットの燃料", "H"], ["スマートフォンや電気自動車", "Li"], ["宝石のエメラルド", "Be"], ["石油化学工業", "C"], ["トンネルの中", "Na"], ["飲み物の缶", "Al"], ["太陽電池", "Si"], ["骨とセメント", "Ca"], ["光触媒", "Ti"], ["血液と", "Fe"], ["ハードディスク", "Co"], ["青色発光ダイオード", "Ga"], ["昔のトランジスタラジオ", "Ge"], ["バーコード", "As"], ["写真の印画紙", "Br"], ["イオンが殺菌", "Ag"], ["食器やパイプオルガン", "Sn"], ["指輪や、キログラム原器", "Pt"], ["奈良の大仏", "Hg"], ["放射線をさえぎる", "Pb"], ["植物の光合成", "O"], ["温泉や", "S"], ["エビ・タコ・イカ", "Cu"], ["味を感じる細胞", "Zn"], ["理化学研究所の加速器", "Nh"]];
-const quoted = (t) => (t.match(/「([^」]+)」/) || [])[1];
+const USE = [["ロケットの燃料", "H"], ["スマートフォンや電気自動車", "Li"], ["宝石のエメラルド", "Be"], ["石油化学工業", "C"], ["トンネルの中", "Na"], ["飲み物の缶", "Al"], ["太陽電池", "Si"], ["骨とセメント", "Ca"], ["光触媒", "Ti"], ["血液と", "Fe"], ["ハードディスク", "Co"], ["青色発光ダイオード", "Ga"], ["昔のトランジスタラジオ", "Ge"], ["バーコード", "As"], ["写真の印画紙", "Br"], ["イオンが殺菌", "Ag"], ["食器やパイプオルガン", "Sn"], ["指輪や、キログラム原器", "Pt"], ["奈良の大仏", "Hg"], ["放射線をさえぎる", "Pb"], ["植物の光合成", "O"], ["温泉や", "S"], ["エビ・タコ・イカ", "Cu"], ["味を感じる細胞", "Zn"], ["理化学研究所の加速器", "Nh"],
+  ["とても正確な「光格子時計」", "Sr"], ["液晶ディスプレイの蛍光体", "Y"], ["スペースシャトルの先端", "Zr"], ["リニアモーターカーやMRI", "Nb"], ["しゅようを見つける", "Tc"], ["アセトアルデヒド", "Pd"], ["黄色の顔料", "Cd"], ["液晶ディスプレイの透明導電膜", "In"], ["半導体やDVD", "Sb"], ["DVD・ブルーレイディスクの記録", "Te"], ["探査機はやぶさ", "Xe"], ["液晶ディスプレイの青い", "Ba"], ["ニッケル水素電池", "La"], ["LED電球の黄色い", "Ce"], ["電気自動車のモーター", "Nd"], ["太古の年代", "Sm"], ["液晶ディスプレイの赤・青", "Eu"], ["磁気冷凍", "Gd"], ["液晶ディスプレイの緑", "Tb"], ["熱に強いネオジム磁石", "Dy"], ["レーザー用の保護メガネ", "Er"], ["原子炉の制御棒", "Hf"], ["歯のインプラント", "Ta"], ["ドリルなどの超硬合金", "W"], ["昔のメートル原器", "Ir"], ["緑色に光る", "Tl"], ["スプリンクラー", "Bi"], ["高速増殖炉", "Pu"], ["厚み計", "Am"], ["次の世代のがんの治療薬", "At"]];
+// 豆知識・名前の由来 → 答え（同じ出典メモから）
+const MQ = [["日本は、この元素の世界一", "Se"], ["ふだんの温度で赤い液体", "Br"], ["地球の上で、もっとも少ない気体", "Kr"], ["名前は、ギリシャ語の「人工」", "Tc"], ["名前は、ロシアの鉱山技師サマルスキー", "Sm"], ["名前は、スウェーデンのイッテルビー村", "Yb"], ["鉱物のジルコン", "Hf"], ["多くの金属と、アマルガム", "Hg"], ["1940年に、サイクロトロン", "At"], ["質量数222のものは、3.8日", "Rn"], ["自然界で見つかって名前がついた最後", "Fr"], ["1899年に、鉱石のピッチブレンド", "Ac"], ["人工的につくられた、最初の", "Np"], ["名前は、日本の呼び方", "Nh"], ["名前は、ロシアの核物理学者フレロフ", "Fl"], ["名前は、ロシアのモスクワ州", "Mc"], ["名前は、アメリカのローレンス・リバモア", "Lv"], ["名前は、アメリカのテネシー州", "Ts"], ["名前は、ロシアの核物理学者オガネシアン", "Og"]];
+const YTTERBY = ["Y", "Tb", "Er", "Yb"];
+const quoted = (t) => (t.match(/^「(.+?)」(?:。|この)/) || t.match(/「([^」]+)」/) || [])[1];
 const nameOf = (t) => (quoted(t) || "").replace(/（[A-Za-z]+）$/, "");
 
 // ---- 1. 問題（ブラウザを使わない）----
@@ -40,10 +48,10 @@ const NOPT = { jotai: 3 }; // 選び肢の数（ほかは4つ）
   const all = Object.values(G.BANK), bad = [];
   const REAL = /ドラえもん|ポケモン|ジブリ|鬼滅|サンリオ/;
   const SRCOK = /^https:\/\/(www\.mext\.go\.jp\/stw\/|www\.csj\.jp\/international\/|iupac\.org\/what-we-do\/periodic-table-of-elements\/|www\.riken\.jp\/pr\/fun\/nh\/)/;
-  check("表：gen.js の45の元素が、別に持った表（日本化学会の名前と記号）と原子番号・記号・名前まで同じ", G.ELEM.length === 45 && G.ELEM.every((e) => { const r = BYN[e.n]; return r && r.z === e.z && r.s === e.s; }), G.ELEM.filter((e) => !BYN[e.n] || BYN[e.n].s !== e.s).map((e) => e.n).join(","));
+  check("表：gen.js の118の元素（はじめの45＋2026-11-08 の73）が、別に持った表（日本化学会の名前と記号）と原子番号・記号・名前まで同じ", G.ELEM.length === 118 && new Set(G.ELEM.map((e) => e.z)).size === 118 && G.ELEM.every((e) => { const r = BYN[e.n]; return r && r.z === e.z && r.s === e.s; }), G.ELEM.filter((e) => !BYN[e.n] || BYN[e.n].s !== e.s).map((e) => e.n).join(","));
   check("表：周期と族が、原子番号から出す式（IUPAC の18族）と同じ（ウランは族の問題に出さない）", G.ELEM.every((e) => e.p === period(e.z) && e.g === group(e.z)), G.ELEM.filter((e) => e.p !== period(e.z) || e.g !== group(e.z)).map((e) => `${e.s}:${e.p}/${e.g}≠${period(e.z)}/${group(e.z)}`).join(","));
   check("表：ふだんの様子と金属かどうかが、別に持った表と同じ（液体は臭素と水銀だけ）", G.ELEM.every((e) => e.st === stOf(e.s) && e.m === mOf(e.s)), G.ELEM.filter((e) => e.st !== stOf(e.s) || e.m !== mOf(e.s)).map((e) => e.s).join(","));
-  check("表：使い道は25で、どれも別に持った表の元素と合う", G.USES.length === USE.length && G.USES.every(([z, t]) => { const u = USE.find(([k]) => t.startsWith(k)); return u && BYS[u[1]].z === z; }));
+  check("表：使い道は55（はじめの25＋30）で、どれも別に持った表の元素と合う", G.USES.length === USE.length && USE.length === 55 && G.USES.every(([z, t]) => { const u = USE.find(([k]) => t.startsWith(k)); return u && BYS[u[1]].z === z; }));
   for (const q of all) {
     const P = G.make(q.key), why = [];
     if (!P) { bad.push(q.key + " 作れない"); continue; }
@@ -63,11 +71,14 @@ const NOPT = { jotai: 3 }; // 選び肢の数（ほかは4つ）
     if (k === "bango") { const ns = P.opts.map((o) => parseInt(o)); if (!r || P.ans !== r.z + "番" || ns.some((x, i) => i && x !== ns[i - 1] + 1)) why.push("番号の答え"); }
     if (k === "shuki") { if (!r || P.ans !== `第${period(r.z)}周期`) why.push("周期の答え"); }
     if (k === "zoku") { if (!r || !group(r.z) || P.ans !== group(r.z) + "族") why.push("族の答え"); }
-    if (k === "kinzoku") { const want = t.includes("金属でない") ? "非金属" : "金属"; if (!P.opts.every(isN) || P.opts.filter((o) => mOf(BYN[o].s) === want).length !== 1 || mOf(BYN[P.ans].s) !== want || P.opts.some((o) => SEMI.includes(BYN[o].s) || BYN[o].s === "Nh")) why.push("金属の答え"); }
+    if (k === "kinzoku") { const want = t.includes("金属でない") ? "非金属" : "金属"; if (!P.opts.every(isN) || P.opts.filter((o) => mOf(BYN[o].s) === want).length !== 1 || mOf(BYN[P.ans].s) !== want || P.opts.some((o) => SEMI.includes(BYN[o].s) || mOf(BYN[o].s) === null)) why.push("金属の答え"); }
     if (k === "nakama") { const g = r && group(r.z); if (!g || !P.opts.every(isN) || P.opts.filter((o) => group(BYN[o].z) === g).length !== 1 || group(BYN[P.ans].z) !== g || P.opts.includes(nm)) why.push("同じ族"); }
     if (k === "dan") { const p = r && period(r.z); if (!p || !P.opts.every(isN) || P.opts.filter((o) => period(BYN[o].z) === p).length !== 1 || period(BYN[P.ans].z) !== p || P.opts.includes(nm)) why.push("同じ周期"); }
     if (k === "narabe") { const ok = P.opts.filter((o) => { const zs = o.split(" → ").map((x) => BYN[x]?.z); return zs.length === 3 && zs.every(Boolean) && zs[0] < zs[1] && zs[1] < zs[2]; }); if (ok.length !== 1 || ok[0] !== P.ans) why.push(`並びの答え（${ok.join("/")}）`); }
     if (k === "tsugi") { if (!r || !isN(P.ans) || BYN[P.ans].z !== r.z + 1 || P.opts.filter((o) => BYN[o]?.z === r.z + 1).length !== 1) why.push("次の元素"); }
+    if (k === "mame") { const m = MQ.find(([x]) => quoted(t).startsWith(x)); if (!m || P.ans !== BYS[m[1]].n || !P.opts.every(isN) || P.mame || P.opts.some((o) => o !== P.ans && YTTERBY.includes(m[1]) && YTTERBY.includes(BYN[o].s)) || P.opts.some((o) => o.length >= 2 && quoted(t).includes(o)) || quoted(t).includes(BYS[m[1]].s + "）")) why.push("豆知識の答え"); }
+    if (P.mame !== "" && (typeof P.mame !== "string" || [...P.mame].length > 40 || P.at.length !== 1 || P.mame !== G.MAME[G.ELEM[P.at[0]].z])) why.push("豆知識");
+    if (k === "tsukai" && P.opts.some((o) => o !== P.ans && BYN[o].z >= 100)) why.push("使い道の選び肢になじみの無い元素");
     if (!P.at || !P.at.length || P.at.some((i) => !G.ELEM[i])) why.push("正解のあとの札が無い");
     else if (isN(P.ans) && !P.at.includes(G.ELEM.findIndex((e) => e.n === P.ans))) why.push("札に答えの元素が無い");
     if (why.length) bad.push(q.key + "：" + why.join("・"));
@@ -76,7 +87,7 @@ const NOPT = { jotai: 3 }; // 選び肢の数（ほかは4つ）
   check("問題：とことん・練習で出る問題は300問以上（好きなだけ遊んでも、すぐに同じ問題にならない）", all.length >= 300, all.length);
   const per = G.KINDS.map((k) => [k.id, G.keysOf(k.id).length]).filter(([, n]) => n < 20);
   check("問題：どの種類も20問以上ある", per.length === 0, per.join(" "));
-  check("問題：種類は12（やさしい4・ふつう4・むずかしい4）", G.KINDS.length === 12 && [0, 1, 2].map((l) => G.kindsOf(l).length).join() === "4,4,4", [0, 1, 2].map((l) => G.kindsOf(l).length).join());
+  check("問題：種類は13（やさしい4・ふつう4・むずかしい5。豆知識から元素は 2026-11-08 から）", G.KINDS.length === 13 && [0, 1, 2].map((l) => G.kindsOf(l).length).join() === "4,4,5", [0, 1, 2].map((l) => G.kindsOf(l).length).join());
   check("知らない key（constructor など）は問題にしない", G.make("constructor") === null && G.make("__proto__") === null && G.make("toString") === null);
   const longLook = G.KINDS.filter((k) => [...k.look].length > 45).map((k) => k.id);
   check("ヒントは45字以内（やさしい日本語。一文を短く）", !longLook.length, longLook.join(","));
@@ -103,7 +114,15 @@ const NOPT = { jotai: 3 }; // 選び肢の数（ほかは4つ）
     if (i < 60) [...dk, ...hk].forEach((k) => cover.add(k));
   }
   check("今日の5問（やさしい2・ふつう2・むずかしい1、種類は重ねない）と上級（むずかしい3・今日のむずかしいと別）を3年分作れる", bad.length === 0, bad.slice(0, 5).join(","));
-  check("2か月のうちに12種類が全部出る・前の日と同じ5問の日が無い", cover.size === 12 && sameAsPrev === 0, `${cover.size}種類・前の日と同じ ${sameAsPrev}日`);
+  check("2か月のうちに13種類が全部出る・前の日と同じ5問の日が無い", cover.size === 13 && sameAsPrev === 0, `${cover.size}種類・前の日と同じ ${sameAsPrev}日`);
+  { // 足した問題（v:2）は V2DAY より前の日に出さず、その日からは出る
+    let early = 0, late = 0;
+    for (let i = -400; i < 400; i++) { const d = new Date(Date.parse(G.V2DAY) + i * 864e5).toISOString().slice(0, 10), ts = [...G.dailyTags(d), ...G.hardTags(d)];
+      const n = ts.filter((t) => G.BANK[t].v === 2).length; if (i < 0) early += n; else late += n; }
+    check("足した問題（73元素・使い道30・豆知識から元素）は 2026-11-08 より前の日には出ず、その日からは出る", early === 0 && late > 100, `前 ${early}・後 ${late}`);
+    const withM = Object.values(G.BANK).filter((q) => G.make(q.key).mame).length;
+    check("正解のあとの豆知識が、24元素の問題に出る（40字以内・答えの元素のもの）", Object.keys(G.MAME).length === 24 && withM >= 120, `${withM}問`);
+  }
   // 過去の日の問題を変えない：はじめの日の5問を控えと比べる（gen.js・BANK を変えたら、ここが落ちる）
   check("過去の日の問題が変わらない（第1回 2026-11-07 の5問と上級）", JSON.stringify([G.dailyTags("2026-11-07"), G.hardTags("2026-11-07")]) === FIRST_DAY, JSON.stringify([G.dailyTags("2026-11-07"), G.hardTags("2026-11-07")]));
 }
@@ -386,6 +405,21 @@ try {
       const cd = await q.evaluate(() => { const cs = [...document.querySelectorAll("#scene .card")]; return { n: cs.length, txt: cs.map((c) => c.textContent), w: Math.max(0, ...cs.map((c) => c.getBoundingClientRect().right)), sw: document.documentElement.scrollWidth }; });
       const be = G.ELEM.find((e) => e.s === "Be"), use = G.USES.find((u) => u[0] === 4)[1];
       check("正解すると、答えにかかわる元素の札が出る（次の元素は2枚。記号・原子番号・周期と族・ふだんの様子・金属かどうか・使い道。幅320pxではみ出さない）", cd.n === 2 && cd.txt.some((t) => t.includes("ベリリウム（Be）原子番号4") && t.includes("第2周期・2族・ふだんは固体・金属") && t.includes(use)) && be && cd.w <= 320 && cd.sw <= 320, JSON.stringify(cd).slice(0, 300));
+      await q.context().close();
+    }
+    // 正解すると、答えの元素の豆知識が出る（豆知識から当てる問題では、同じ文を2回出さない）。ランタノイドの札は「ランタノイド」
+    {
+      const q = await newPage(); await closeHow(q); await q.click("#go-e"); await q.waitForTimeout(150);
+      const seen = [];
+      for (const tag of ["kigo|z117", "mame|z117-0", "kigo|z60"]) {
+        await q.evaluate((t) => { __km.save((x) => { x.runs.e.list[x.runs.e.res.length] = t; }); __km.play(); }, tag);
+        await q.waitForTimeout(150);
+        const i = await q.evaluate(() => __km.cur().P.opts.indexOf(__km.cur().P.ans));
+        await q.locator(".ch").nth(i).click(); await q.waitForTimeout(100);
+        seen.push((await q.locator(".verdict .why.mame").count() ? await q.textContent(".verdict .why.mame") : "") + "｜" + (await q.textContent("#scene")));
+        await q.click("#next"); await q.waitForTimeout(150);
+      }
+      check("正解すると「豆知識：」が出る（テネシン＝テネシー州）。豆知識から当てる問題では出さない。ネオジムの札はランタノイド", /豆知識：名前は、アメリカのテネシー州/.test(seen[0]) && seen[1].startsWith("｜") && /ランタノイド/.test(seen[2]) && !/アクチノイド/.test(seen[2]), seen.join(" / "));
       await q.context().close();
     }
     check("幅320px・とても大きい文字でも横にはみ出さない", bad.length === 0, bad.join(" / "));
