@@ -448,7 +448,7 @@ function tidy(s) {
   s.ebest = num(s.ebest);
   if (typeof s.elast !== "string" || !Object.prototype.hasOwnProperty.call(G.BANK, s.elast)) s.elast = null;
   for (const q of ["days", "hdays", "adays", "dex", "runs", "kofi", "ach"]) if (!s[q] || typeof s[q] !== "object" || Array.isArray(s[q])) s[q] = {};
-  for (const k in s.dex) s.dex[k] = num(s.dex[k]);
+  for (const k of Object.keys(s.dex)) { if (Object.prototype.hasOwnProperty.call(G.BY, k)) s.dex[k] = num(s.dex[k]); else delete s.dex[k]; } // 知らない種類（constructor など）は数えない
   // 日付と日ごとの記録の形も確かめ、壊れたものは捨てる（細工した引き継ぎコードで画面が止まらないように。2026-11-05 CodeRabbit）
   const okDate = (v) => { if (typeof v !== "string" || !/^\d{4}-\d\d-\d\d$/.test(v)) return false; const t = Date.parse(v + "T00:00:00Z"); return Number.isFinite(t) && new Date(t).toISOString().slice(0, 10) === v; }; // 2026-02-30 のような無い日も捨てる
   const okTag = (t) => typeof t === "string" && Object.prototype.hasOwnProperty.call(G.BANK, t);
@@ -475,7 +475,7 @@ function lateDays(s, k = todayKey()) { const out = []; let d = k; for (let i = 0
 function tally(s) {
   const dk = Object.values(s.days).filter((r) => r && Array.isArray(r.m));
   return { days: Object.keys(s.days).length, played: playedDays(s), clean: dk.filter((r) => r.m.length && r.m.every((m) => m === 0)).length, hard: Object.keys(s.hdays).length,
-    late: Object.keys(s.adays).length, kinds: Object.keys(s.dex).filter((k) => G.BY[k] && s.dex[k] > 0).length, solved: solvedAll(s), ebest: s.ebest || 0 };
+    late: Object.keys(s.adays).length, kinds: Object.keys(s.dex).filter((k) => Object.prototype.hasOwnProperty.call(G.BY, k) && s.dex[k] > 0).length, solved: solvedAll(s), ebest: s.ebest || 0 };
 }
 const ACH = [
   ["clean1", "ひと目で見通す", "今日の5問を、まちがいもヒントもなしで答える", 0, "clean", 1],
@@ -533,7 +533,7 @@ function home() {
   const s = load(), k = todayKey(), done = s.days[k], hdone = s.hdays[k];
   // 最後の1問を解いて結果を見る前に閉じた回は、開き直したら結果へ進める（記録をつける）
   for (const m of Object.keys(s.runs)) { const r = s.runs[m]; if (m !== "p" && m !== "e" && r && doneOf(r)) { MODE = m; return finish(); } }
-  const late = lateDays(s, k), ag = achGot(s).length, fs = fsGet(), tip = tipOf(k), nk = Object.keys(s.dex).filter((x) => G.BY[x]).length;
+  const late = lateDays(s, k), ag = achGot(s).length, fs = fsGet(), tip = tipOf(k), nk = Object.keys(s.dex).filter((x) => Object.prototype.hasOwnProperty.call(G.BY, x) && s.dex[x] > 0).length;
   const rd = s.runs.d && s.runs.d.date === k ? s.runs.d : null, rh = s.runs.h && s.runs.h.date === k ? s.runs.h : null, re = s.runs.e || null;
   const st = streak(s.days);
   app.innerHTML = `
